@@ -69,7 +69,7 @@ func sqlRowToLoginRecord(row sq.RowScanner) (*_LoginRecord, error) {
 
 func findLoginRecords(conn sq.BaseRunner, pagination *pagination) ([]*_LoginRecord, error) {
   log := securityLog.WithField("m", "findLoginRecords")
-  query := sq.Select("id, username, client, login_at, logout_at").From("login_record")
+  query := sq.Select("id, username, client, login_at, logout_at").From("login_record").OrderBy("login_at desc")
   if pagination != nil {
     query = pagination.PageLimit(query)
   }
