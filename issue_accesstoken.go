@@ -12,14 +12,6 @@ import (
 
 var securityLog = logrus.WithField("f", "models.Security")
 
-type _LoginRecord struct {
-  ID       int
-  Username string
-  Client   string
-  LoginAt  time.Time
-  LogoutAt *time.Time
-}
-
 const (
 	signingKey             = "e0943jfnndafvoijrgojo@##I*)#(foijaojfgo)"
 	accessTokenValidPeriod = 30 //days
@@ -31,61 +23,6 @@ const (
 	tokenClient            = "client"
   tokenTimeFormat        = "2006-01-02 15:04:05"
 )
-
-func recordLogin(db sq.BaseRunner, username string, client string) (*_LoginRecord, error) {
-  log := securityLog.WithField("m", "RecordLogin")
-  Now := time.Now()
-  _, err := sq.Update("login_record").Set("logout_at", Now).Where(sq.Eq{"username": username, "client": client}).
-    RunWith(db).Exec()
-  if err != nil {
-    log.Error(err.Error())
-    return nil, err
-  }
-
-  res, err := sq.Insert("login_record").Columns("username", "client", "login_at").
-    Values(username, client, Now).
-    RunWith(db).Exec()
-  if err != nil {
-    log.Error(err.Error())
-    return nil, err
-  }
-  id64, err := res.LastInsertId()
-  if err != nil {
-    log.Error(err.Error())
-    return nil, err
-  }
-
-  return &_LoginRecord{
-    ID: int(id64),
-    Username: username,
-    Client: client,
-    LoginAt: Now,
-  }, nil
-}
-
-func getLoginRecord(conn sq.DBProxyBeginner, id int) (*_LoginRecord, error) {
-  query := sq.Select("id, username, client, login_at, logout_at").From("login_record").
-    Where("id=?", id).RunWith(conn)
-  return rowsToLoginRecord(query.QueryRow())
-}
-
-func rowsToLoginRecord(row sq.RowScanner) (*_LoginRecord, error) {
-  log := securityLog.WithField("m", "rowsToLoginRecord")
-  var (
-    id int
-    username string
-    client string
-    loginAt time.Time
-    logoutAt *time.Time
-  )
-  if err := row.Scan(&id, &username, &client, &loginAt, &logoutAt); err != nil {
-    log.Error(err.Error())
-    return nil, err
-  }
-  return &_LoginRecord{ID: id, Username: username, Client: client, LoginAt: loginAt, LogoutAt: logoutAt}, nil
-
-}
-
 
 func isAccessTokenValid(dbProxy sq.DBProxyBeginner, accessToken *AccessToken) bool {
   log := securityLog.WithField("m", "IsAccessTokenValid")
