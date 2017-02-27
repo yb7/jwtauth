@@ -58,13 +58,13 @@ func parseJwt(c echo.Context) (*AccessToken, error) {
 
 func getAccessToken(c echo.Context) (string, error) {
 	var signedString string
-	auth := c.Request().Header().Get("Authorization")
+	auth := c.Request().Header.Get("Authorization")
 	l := len(_Bearer)
 
 	if len(auth) > l+1 && auth[:l] == _Bearer {
 		signedString = auth[l+1:]
-	} else if len(c.Request().URL().QueryParam("access_token")) > 1 {
-		signedString = c.Request().URL().QueryParam("access_token")
+	} else if len(c.QueryParam("access_token")) > 1 {
+		signedString = c.QueryParam("access_token")
 	}
 	//else if cookie, err := c.Request().Cookie("access_token"); err == nil {
 	//	signedString = cookie.Value
